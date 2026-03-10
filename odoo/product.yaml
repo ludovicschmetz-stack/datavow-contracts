@@ -123,7 +123,7 @@ quality:
 
     - name: barcode_unique_when_set
       type: sql
-      query: "SELECT COUNT(*) FROM (SELECT barcode FROM {table} WHERE barcode IS NOT NULL AND TRIM(barcode) != '' GROUP BY barcode HAVING COUNT(*) > 1)"
+      query: "SELECT COUNT(*) - COUNT(DISTINCT barcode) FROM {table} WHERE barcode IS NOT NULL"
       threshold: 0
       severity: CRITICAL
       description: Barcodes must be unique across products

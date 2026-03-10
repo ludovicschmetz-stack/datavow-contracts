@@ -117,7 +117,7 @@ quality:
 
     - name: sales_org_not_null
       type: sql
-      query: "SELECT COUNT(*) FROM {table} WHERE vkorg IS NULL OR TRIM(vkorg) = ''"
+      query: "SELECT COUNT(*) FROM {table} WHERE vkorg IS NULL OR CAST(vkorg AS VARCHAR) = ''"
       threshold: 0
       severity: CRITICAL
 
