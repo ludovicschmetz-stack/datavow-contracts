@@ -1,0 +1,132 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: salesforce-accounts
+  version: 1.0.0
+  owner: crm-team@company.com
+  domain: sales
+  description: >
+    Salesforce Account object — the core entity for B2B relationships.
+    This contract validates the standard fields most commonly extracted
+    to a data warehouse via Fivetran, Airbyte, or custom ETL.
+  tags: [salesforce, crm, accounts, b2b]
+
+schema:
+  type: table
+  fields:
+    - name: id
+      type: string
+      required: true
+      unique: true
+      description: Salesforce 18-char record ID
+
+    - name: name
+      type: string
+      required: true
+      description: Account name (company name)
+
+    - name: type
+      type: string
+      required: false
+      description: "Account type: Customer, Partner, Prospect, etc."
+
+    - name: industry
+      type: string
+      required: false
+      description: Industry picklist value
+
+    - name: annual_revenue
+      type: float
+      required: false
+      description: Annual revenue in account currency
+
+    - name: number_of_employees
+      type: integer
+      required: false
+      description: Estimated employee count
+
+    - name: billing_country
+      type: string
+      required: false
+      description: Billing address country
+
+    - name: billing_city
+      type: string
+      required: false
+
+    - name: phone
+      type: string
+      required: false
+      pii: true
+
+    - name: website
+      type: string
+      required: false
+
+    - name: owner_id
+      type: string
+      required: true
+      description: Salesforce user ID of the account owner
+
+    - name: created_date
+      type: timestamp
+      required: true
+      description: Record creation timestamp (UTC)
+
+    - name: last_modified_date
+      type: timestamp
+      required: true
+      description: Last modification timestamp (UTC)
+
+    - name: is_deleted
+      type: boolean
+      required: true
+      description: Soft-delete flag — true if record is in the recycle bin
+
+quality:
+  rules:
+    - name: id_format_18_char
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE LENGTH(id) != 18"
+      threshold: 0
+      severity: CRITICAL
+      description: Salesforce IDs must be exactly 18 characters
+
+    - name: no_null_account_names
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE name IS NULL OR TRIM(name) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Every account must have a name
+
+    - name: owner_id_not_null
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE owner_id IS NULL"
+      threshold: 0
+      severity: CRITICAL
+      description: Every account must have an owner
+
+    - name: no_negative_revenue
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE annual_revenue < 0"
+      threshold: 0
+      severity: WARNING
+      description: Revenue should not be negative
+
+    - name: no_future_created_dates
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE created_date > CURRENT_TIMESTAMP"
+      threshold: 0
+      severity: WARNING
+      description: Created date should not be in the future
+
+    - name: modified_after_created
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE last_modified_date < created_date"
+      threshold: 0
+      severity: WARNING
+      description: Last modified date should not precede created date
+
+sla:
+  freshness: 24h
+  completeness: 99%

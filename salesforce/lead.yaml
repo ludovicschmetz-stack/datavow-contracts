@@ -1,0 +1,150 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: salesforce-leads
+  version: 1.0.0
+  owner: crm-team@company.com
+  domain: marketing
+  description: >
+    Salesforce Lead object — top of funnel.
+    Tracks prospects before conversion to Account/Contact/Opportunity.
+  tags: [salesforce, crm, leads, marketing, pii]
+
+schema:
+  type: table
+  fields:
+    - name: id
+      type: string
+      required: true
+      unique: true
+
+    - name: first_name
+      type: string
+      required: false
+      pii: true
+
+    - name: last_name
+      type: string
+      required: true
+      pii: true
+
+    - name: company
+      type: string
+      required: true
+      description: Company name — required by Salesforce
+
+    - name: email
+      type: string
+      required: false
+      pii: true
+
+    - name: phone
+      type: string
+      required: false
+      pii: true
+
+    - name: status
+      type: string
+      required: true
+      description: "Lead status: New, Contacted, Qualified, Converted, etc."
+
+    - name: lead_source
+      type: string
+      required: false
+      description: "Web, Referral, Partner, Campaign, etc."
+
+    - name: industry
+      type: string
+      required: false
+
+    - name: annual_revenue
+      type: float
+      required: false
+
+    - name: is_converted
+      type: boolean
+      required: true
+      description: True if lead has been converted to Account/Contact/Opp
+
+    - name: converted_date
+      type: date
+      required: false
+
+    - name: converted_account_id
+      type: string
+      required: false
+
+    - name: converted_contact_id
+      type: string
+      required: false
+
+    - name: converted_opportunity_id
+      type: string
+      required: false
+
+    - name: owner_id
+      type: string
+      required: true
+
+    - name: created_date
+      type: timestamp
+      required: true
+
+    - name: last_modified_date
+      type: timestamp
+      required: true
+
+    - name: is_deleted
+      type: boolean
+      required: true
+
+quality:
+  rules:
+    - name: id_format_18_char
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE LENGTH(id) != 18"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: company_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE company IS NULL OR TRIM(company) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Salesforce enforces company as required on Lead
+
+    - name: last_name_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE last_name IS NULL OR TRIM(last_name) = ''"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: converted_has_date
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE is_converted = true AND converted_date IS NULL"
+      threshold: 0
+      severity: WARNING
+      description: Converted leads should have a conversion date
+
+    - name: converted_has_account
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE is_converted = true AND converted_account_id IS NULL"
+      threshold: 0
+      severity: WARNING
+      description: Converted leads should reference the target account
+
+    - name: email_format_valid
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE email IS NOT NULL AND email NOT LIKE '%_@_%.__%'"
+      threshold: 0
+      severity: WARNING
+
+    - name: no_negative_revenue
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE annual_revenue < 0"
+      threshold: 0
+      severity: INFO
+
+sla:
+  freshness: 24h
+  completeness: 98%

@@ -1,0 +1,132 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: sap-materials
+  version: 1.0.0
+  owner: erp-team@company.com
+  domain: master-data
+  description: >
+    SAP ERP Material Master (MARA) — general data.
+    Central product/material catalog. One row per material number.
+    Join with MARC (plant data), MARD (storage), MBEW (valuation) for full picture.
+  tags: [sap, erp, materials, master-data, mara, products]
+
+schema:
+  type: table
+  fields:
+    - name: matnr
+      type: string
+      required: true
+      unique: true
+      description: Material number (up to 40-char since S/4HANA)
+
+    - name: maktx
+      type: string
+      required: false
+      description: Material description (from MAKT, language-dependent)
+
+    - name: mtart
+      type: string
+      required: true
+      description: "Material type (FERT=finished, HALB=semi-finished, ROH=raw, HAWA=trading)"
+
+    - name: mbrsh
+      type: string
+      required: true
+      description: Industry sector (M=mechanical, C=chemical, etc.)
+
+    - name: matkl
+      type: string
+      required: false
+      description: Material group (classification)
+
+    - name: meins
+      type: string
+      required: true
+      description: Base unit of measure (EA, KG, L, etc.)
+
+    - name: brgew
+      type: float
+      required: false
+      description: Gross weight
+
+    - name: ntgew
+      type: float
+      required: false
+      description: Net weight
+
+    - name: gewei
+      type: string
+      required: false
+      description: Weight unit (KG, LB, G)
+
+    - name: ersda
+      type: date
+      required: true
+      description: Creation date
+
+    - name: ernam
+      type: string
+      required: true
+      description: Created by
+
+    - name: laeda
+      type: date
+      required: false
+      description: Last change date
+
+    - name: lvorm
+      type: string
+      required: false
+      description: "Deletion flag at client level: X = marked"
+
+    - name: ean11
+      type: string
+      required: false
+      description: EAN/UPC code (barcode)
+
+quality:
+  rules:
+    - name: matnr_not_empty
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE matnr IS NULL OR TRIM(matnr) = ''"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: material_type_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE mtart IS NULL OR TRIM(mtart) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Material type drives procurement and production behavior
+
+    - name: base_uom_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE meins IS NULL OR TRIM(meins) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Base unit of measure is mandatory for inventory and pricing
+
+    - name: description_present
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE maktx IS NULL OR TRIM(maktx) = ''"
+      threshold: 0
+      severity: WARNING
+      description: Materials without descriptions create downstream reporting issues
+
+    - name: weight_consistency
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE brgew IS NOT NULL AND ntgew IS NOT NULL AND ntgew > brgew"
+      threshold: 0
+      severity: WARNING
+      description: Net weight cannot exceed gross weight
+
+    - name: no_negative_weights
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE brgew < 0 OR ntgew < 0"
+      threshold: 0
+      severity: WARNING
+
+sla:
+  freshness: 24h
+  completeness: 99%

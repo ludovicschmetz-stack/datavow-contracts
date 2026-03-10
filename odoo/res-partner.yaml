@@ -1,0 +1,137 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: odoo-partners
+  version: 1.0.0
+  owner: erp-team@company.com
+  domain: master-data
+  description: >
+    Odoo res.partner — the unified entity for customers, suppliers, contacts,
+    and companies. Dual-purpose: a company (is_company=true) or an individual
+    contact linked to a company via parent_id.
+  tags: [odoo, erp, partners, customers, suppliers, pii]
+
+schema:
+  type: table
+  fields:
+    - name: id
+      type: integer
+      required: true
+      unique: true
+      description: Odoo internal ID (auto-increment)
+
+    - name: name
+      type: string
+      required: true
+      description: Partner display name (company or person name)
+
+    - name: is_company
+      type: boolean
+      required: true
+      description: True = company, False = individual contact
+
+    - name: parent_id
+      type: integer
+      required: false
+      description: FK to parent company (for contacts belonging to a company)
+
+    - name: email
+      type: string
+      required: false
+      pii: true
+
+    - name: phone
+      type: string
+      required: false
+      pii: true
+
+    - name: mobile
+      type: string
+      required: false
+      pii: true
+
+    - name: street
+      type: string
+      required: false
+      pii: true
+
+    - name: city
+      type: string
+      required: false
+
+    - name: zip
+      type: string
+      required: false
+
+    - name: country_id
+      type: integer
+      required: false
+      description: FK to res.country
+
+    - name: vat
+      type: string
+      required: false
+      description: Tax ID / VAT number
+      pii: true
+
+    - name: customer_rank
+      type: integer
+      required: false
+      description: ">0 means this partner is a customer"
+
+    - name: supplier_rank
+      type: integer
+      required: false
+      description: ">0 means this partner is a supplier"
+
+    - name: active
+      type: boolean
+      required: true
+      description: Soft-delete flag (false = archived)
+
+    - name: create_date
+      type: timestamp
+      required: true
+
+    - name: write_date
+      type: timestamp
+      required: true
+
+quality:
+  rules:
+    - name: name_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE name IS NULL OR TRIM(name) = ''"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: contact_has_parent
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE is_company = false AND parent_id IS NULL AND customer_rank > 0"
+      threshold: 0
+      severity: INFO
+      description: Individual customers without a parent company — may be intentional (B2C) or missing link
+
+    - name: email_format_valid
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE email IS NOT NULL AND email != '' AND email NOT LIKE '%_@_%.__%'"
+      threshold: 0
+      severity: WARNING
+
+    - name: company_has_vat
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE is_company = true AND customer_rank > 0 AND (vat IS NULL OR TRIM(vat) = '')"
+      threshold: 0
+      severity: INFO
+      description: B2B customers should have a VAT number for invoicing
+
+    - name: no_orphan_contacts
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} t WHERE t.parent_id IS NOT NULL AND t.parent_id NOT IN (SELECT id FROM {table})"
+      threshold: 0
+      severity: CRITICAL
+      description: Contacts must reference an existing parent company
+
+sla:
+  freshness: 24h
+  completeness: 99%

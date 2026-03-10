@@ -1,0 +1,140 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: odoo-sale-orders
+  version: 1.0.0
+  owner: erp-team@company.com
+  domain: sales
+  description: >
+    Odoo sale.order — sales order header.
+    One row per quotation/order. Join with sale.order.line for line items.
+    States flow: draft → sent → sale → done (or cancel).
+  tags: [odoo, erp, sales, orders, transactions]
+
+schema:
+  type: table
+  fields:
+    - name: id
+      type: integer
+      required: true
+      unique: true
+
+    - name: name
+      type: string
+      required: true
+      description: "Order reference (e.g., S00042)"
+
+    - name: partner_id
+      type: integer
+      required: true
+      description: FK to res.partner (customer)
+
+    - name: state
+      type: string
+      required: true
+      description: "draft, sent, sale, done, cancel"
+
+    - name: date_order
+      type: timestamp
+      required: true
+      description: Order date
+
+    - name: amount_untaxed
+      type: float
+      required: true
+      description: Total before taxes
+
+    - name: amount_tax
+      type: float
+      required: true
+      description: Tax amount
+
+    - name: amount_total
+      type: float
+      required: true
+      description: Grand total (untaxed + tax)
+
+    - name: currency_id
+      type: integer
+      required: true
+      description: FK to res.currency
+
+    - name: pricelist_id
+      type: integer
+      required: false
+      description: FK to product.pricelist
+
+    - name: user_id
+      type: integer
+      required: false
+      description: Salesperson (FK to res.users)
+
+    - name: team_id
+      type: integer
+      required: false
+      description: Sales team (FK to crm.team)
+
+    - name: invoice_status
+      type: string
+      required: false
+      description: "upselling, invoiced, to invoice, no"
+
+    - name: commitment_date
+      type: timestamp
+      required: false
+      description: Delivery commitment date
+
+    - name: create_date
+      type: timestamp
+      required: true
+
+    - name: write_date
+      type: timestamp
+      required: true
+
+quality:
+  rules:
+    - name: partner_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE partner_id IS NULL"
+      threshold: 0
+      severity: CRITICAL
+      description: Every order must have a customer
+
+    - name: valid_state
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE state NOT IN ('draft', 'sent', 'sale', 'done', 'cancel')"
+      threshold: 0
+      severity: CRITICAL
+      description: State must be one of the 5 Odoo standard values
+
+    - name: amount_total_consistency
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE ABS(amount_total - (amount_untaxed + amount_tax)) > 0.01"
+      threshold: 0
+      severity: CRITICAL
+      description: Total must equal untaxed + tax (within rounding tolerance)
+
+    - name: no_negative_totals
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE amount_total < 0 AND state != 'cancel'"
+      threshold: 0
+      severity: WARNING
+      description: Non-cancelled orders should not have negative totals
+
+    - name: confirmed_orders_have_date
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE state IN ('sale', 'done') AND date_order IS NULL"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: cancelled_not_invoiced
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE state = 'cancel' AND invoice_status = 'invoiced'"
+      threshold: 0
+      severity: WARNING
+      description: Cancelled orders should not show as fully invoiced
+
+sla:
+  freshness: 24h
+  completeness: 99%

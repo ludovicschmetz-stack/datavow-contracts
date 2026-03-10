@@ -1,0 +1,139 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: odoo-products
+  version: 1.0.0
+  owner: erp-team@company.com
+  domain: master-data
+  description: >
+    Odoo product.product — product variants.
+    Each row is a sellable/purchasable variant. Inherits from product.template.
+    Common extraction target for e-commerce, inventory, and sales analytics.
+  tags: [odoo, erp, products, master-data, inventory]
+
+schema:
+  type: table
+  fields:
+    - name: id
+      type: integer
+      required: true
+      unique: true
+
+    - name: product_tmpl_id
+      type: integer
+      required: true
+      description: FK to product.template (parent product)
+
+    - name: name
+      type: string
+      required: true
+      description: Product display name (inherited from template + variant)
+
+    - name: default_code
+      type: string
+      required: false
+      description: Internal reference / SKU
+
+    - name: barcode
+      type: string
+      required: false
+      unique: true
+      description: EAN-13 or UPC barcode
+
+    - name: type
+      type: string
+      required: true
+      description: "consu (consumable), service, product (storable)"
+
+    - name: categ_id
+      type: integer
+      required: true
+      description: FK to product.category
+
+    - name: list_price
+      type: float
+      required: true
+      description: Sale price
+
+    - name: standard_price
+      type: float
+      required: false
+      description: Cost price
+
+    - name: uom_id
+      type: integer
+      required: true
+      description: FK to uom.uom (unit of measure)
+
+    - name: weight
+      type: float
+      required: false
+      description: Product weight in kg
+
+    - name: sale_ok
+      type: boolean
+      required: true
+      description: Can be sold
+
+    - name: purchase_ok
+      type: boolean
+      required: true
+      description: Can be purchased
+
+    - name: active
+      type: boolean
+      required: true
+      description: Soft-delete flag (false = archived)
+
+    - name: create_date
+      type: timestamp
+      required: true
+
+    - name: write_date
+      type: timestamp
+      required: true
+
+quality:
+  rules:
+    - name: name_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE name IS NULL OR TRIM(name) = ''"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: valid_type
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE type NOT IN ('consu', 'service', 'product')"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: positive_sale_price
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE sale_ok = true AND list_price <= 0"
+      threshold: 0
+      severity: WARNING
+      description: Sellable products should have a positive price
+
+    - name: cost_not_exceeds_sale
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE standard_price IS NOT NULL AND list_price > 0 AND standard_price > list_price * 2"
+      threshold: 0
+      severity: INFO
+      description: Cost price more than 2x the sale price is suspicious (negative margin)
+
+    - name: barcode_unique_when_set
+      type: sql
+      query: "SELECT COUNT(*) FROM (SELECT barcode FROM {table} WHERE barcode IS NOT NULL AND TRIM(barcode) != '' GROUP BY barcode HAVING COUNT(*) > 1)"
+      threshold: 0
+      severity: CRITICAL
+      description: Barcodes must be unique across products
+
+    - name: no_negative_weight
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE weight IS NOT NULL AND weight < 0"
+      threshold: 0
+      severity: WARNING
+
+sla:
+  freshness: 24h
+  completeness: 99%

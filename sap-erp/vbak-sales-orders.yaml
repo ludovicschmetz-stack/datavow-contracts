@@ -1,0 +1,147 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: sap-sales-orders
+  version: 1.0.0
+  owner: erp-team@company.com
+  domain: sales
+  description: >
+    SAP ERP Sales Order Header (VBAK) — core transactional data.
+    One row per sales order. Join with VBAP for line items.
+    Typically extracted via SAP extractors (2LIS_11_VAHDR) or CDS views.
+  tags: [sap, erp, sales-orders, vbak, transactions]
+
+schema:
+  type: table
+  fields:
+    - name: vbeln
+      type: string
+      required: true
+      unique: true
+      description: Sales document number (10-char)
+
+    - name: auart
+      type: string
+      required: true
+      description: "Sales document type (TA=standard, RE=return, etc.)"
+
+    - name: vkorg
+      type: string
+      required: true
+      description: Sales organization (4-char)
+
+    - name: vtweg
+      type: string
+      required: true
+      description: Distribution channel (2-char)
+
+    - name: spart
+      type: string
+      required: true
+      description: Division (2-char)
+
+    - name: kunnr
+      type: string
+      required: true
+      description: Sold-to party (FK to KNA1)
+
+    - name: erdat
+      type: date
+      required: true
+      description: Document creation date
+
+    - name: erzet
+      type: string
+      required: false
+      description: Creation time (HHMMSS)
+
+    - name: ernam
+      type: string
+      required: true
+      description: Created by (user ID)
+
+    - name: netwr
+      type: float
+      required: false
+      description: Net value of the order in document currency
+
+    - name: waerk
+      type: string
+      required: true
+      description: Document currency (ISO 3-letter)
+
+    - name: bstnk
+      type: string
+      required: false
+      description: Customer purchase order number
+
+    - name: audat
+      type: date
+      required: false
+      description: Document date (requested by customer)
+
+    - name: vdatu
+      type: date
+      required: false
+      description: Requested delivery date
+
+    - name: lifsk
+      type: string
+      required: false
+      description: Delivery block
+
+    - name: faksk
+      type: string
+      required: false
+      description: Billing block
+
+    - name: gbstk
+      type: string
+      required: false
+      description: "Overall processing status (A=open, B=partial, C=complete)"
+
+quality:
+  rules:
+    - name: vbeln_format
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE LENGTH(TRIM(vbeln)) = 0 OR LENGTH(vbeln) > 10"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: customer_not_null
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE kunnr IS NULL OR TRIM(kunnr) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Every sales order must have a sold-to party
+
+    - name: sales_org_not_null
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE vkorg IS NULL OR TRIM(vkorg) = ''"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: currency_3_char
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE waerk IS NULL OR LENGTH(TRIM(waerk)) != 3"
+      threshold: 0
+      severity: CRITICAL
+      description: Currency must be a 3-letter ISO code
+
+    - name: no_negative_net_value
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE netwr < 0 AND auart NOT IN ('RE', 'CR')"
+      threshold: 0
+      severity: WARNING
+      description: Net value should not be negative except for returns/credits
+
+    - name: delivery_date_after_creation
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE vdatu IS NOT NULL AND vdatu < erdat"
+      threshold: 0
+      severity: INFO
+      description: Requested delivery date should not precede order creation
+
+sla:
+  freshness: 24h
+  completeness: 99.5%

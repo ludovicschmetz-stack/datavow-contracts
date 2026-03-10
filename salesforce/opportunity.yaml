@@ -1,0 +1,140 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: salesforce-opportunities
+  version: 1.0.0
+  owner: crm-team@company.com
+  domain: sales
+  description: >
+    Salesforce Opportunity object — the revenue pipeline.
+    Most critical object for sales analytics and forecasting.
+  tags: [salesforce, crm, opportunities, revenue, pipeline]
+
+schema:
+  type: table
+  fields:
+    - name: id
+      type: string
+      required: true
+      unique: true
+
+    - name: account_id
+      type: string
+      required: false
+      description: FK to Account
+
+    - name: name
+      type: string
+      required: true
+      description: Opportunity name
+
+    - name: stage_name
+      type: string
+      required: true
+      description: "Sales stage: Prospecting, Qualification, Closed Won, etc."
+
+    - name: amount
+      type: float
+      required: false
+      description: Deal value in opportunity currency
+
+    - name: probability
+      type: float
+      required: false
+      description: Win probability percentage (0-100)
+
+    - name: close_date
+      type: date
+      required: true
+      description: Expected or actual close date
+
+    - name: type
+      type: string
+      required: false
+      description: "New Business, Existing Business, Renewal, etc."
+
+    - name: lead_source
+      type: string
+      required: false
+
+    - name: is_closed
+      type: boolean
+      required: true
+
+    - name: is_won
+      type: boolean
+      required: true
+
+    - name: forecast_category
+      type: string
+      required: false
+      description: "Pipeline, Best Case, Commit, Closed, Omitted"
+
+    - name: owner_id
+      type: string
+      required: true
+
+    - name: created_date
+      type: timestamp
+      required: true
+
+    - name: last_modified_date
+      type: timestamp
+      required: true
+
+    - name: is_deleted
+      type: boolean
+      required: true
+
+quality:
+  rules:
+    - name: id_format_18_char
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE LENGTH(id) != 18"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: stage_name_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE stage_name IS NULL OR TRIM(stage_name) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Every opportunity must have a stage
+
+    - name: close_date_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE close_date IS NULL"
+      threshold: 0
+      severity: CRITICAL
+      description: Salesforce enforces close_date as required
+
+    - name: probability_range
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE probability IS NOT NULL AND (probability < 0 OR probability > 100)"
+      threshold: 0
+      severity: CRITICAL
+      description: Probability must be between 0 and 100
+
+    - name: closed_won_consistency
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE is_won = true AND is_closed = false"
+      threshold: 0
+      severity: CRITICAL
+      description: A won opportunity must also be marked as closed
+
+    - name: no_negative_amount
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE amount < 0"
+      threshold: 0
+      severity: WARNING
+
+    - name: closed_opps_have_amount
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE is_closed = true AND is_won = true AND (amount IS NULL OR amount = 0)"
+      threshold: 0
+      severity: WARNING
+      description: Closed-won deals should have an amount for accurate revenue reporting
+
+sla:
+  freshness: 24h
+  completeness: 99.5%

@@ -1,0 +1,142 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: sap-customers
+  version: 1.0.0
+  owner: erp-team@company.com
+  domain: master-data
+  description: >
+    SAP ERP Customer Master (KNA1) — general data.
+    Core entity for sales, billing, and delivery. Extracted via SAP extractors,
+    CDS views, or tools like Fivetran/Airbyte SAP connectors.
+  tags: [sap, erp, customers, master-data, kna1]
+
+schema:
+  type: table
+  fields:
+    - name: kunnr
+      type: string
+      required: true
+      unique: true
+      description: Customer number (10-char, left-padded with zeros)
+
+    - name: name1
+      type: string
+      required: true
+      description: Customer name line 1
+
+    - name: name2
+      type: string
+      required: false
+      description: Customer name line 2
+
+    - name: land1
+      type: string
+      required: true
+      description: Country key (ISO 2-letter)
+
+    - name: ort01
+      type: string
+      required: false
+      description: City
+
+    - name: pstlz
+      type: string
+      required: false
+      description: Postal code
+
+    - name: stras
+      type: string
+      required: false
+      description: Street address
+      pii: true
+
+    - name: telf1
+      type: string
+      required: false
+      description: Phone number
+      pii: true
+
+    - name: smtp_addr
+      type: string
+      required: false
+      description: Email address
+      pii: true
+
+    - name: ktokd
+      type: string
+      required: true
+      description: "Account group (e.g., KUNA=sold-to, KUNW=ship-to)"
+
+    - name: stcd1
+      type: string
+      required: false
+      description: Tax number 1 (VAT ID)
+      pii: true
+
+    - name: erdat
+      type: date
+      required: true
+      description: Record creation date
+
+    - name: ernam
+      type: string
+      required: true
+      description: Created by (user ID)
+
+    - name: loevm
+      type: string
+      required: false
+      description: "Deletion flag: X = marked for deletion"
+
+    - name: sperr
+      type: string
+      required: false
+      description: "Posting block: X = blocked"
+
+quality:
+  rules:
+    - name: kunnr_format
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE LENGTH(TRIM(kunnr)) = 0 OR LENGTH(kunnr) > 10"
+      threshold: 0
+      severity: CRITICAL
+      description: Customer number must be 1-10 characters
+
+    - name: name1_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE name1 IS NULL OR TRIM(name1) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Every customer must have a name
+
+    - name: country_code_valid
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE land1 IS NULL OR LENGTH(TRIM(land1)) != 2"
+      threshold: 0
+      severity: CRITICAL
+      description: Country must be a 2-letter ISO code
+
+    - name: account_group_not_empty
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE ktokd IS NULL OR TRIM(ktokd) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Account group determines customer type — must be set
+
+    - name: no_future_creation_dates
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE erdat > CURRENT_DATE"
+      threshold: 0
+      severity: WARNING
+
+    - name: deleted_customers_flagged
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE loevm = 'X' AND sperr != 'X'"
+      threshold: 0
+      severity: INFO
+      description: Customers marked for deletion should also be blocked
+
+sla:
+  freshness: 24h
+  completeness: 99.5%

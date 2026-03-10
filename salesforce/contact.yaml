@@ -1,0 +1,122 @@
+apiVersion: datavow/v1
+kind: DataContract
+metadata:
+  name: salesforce-contacts
+  version: 1.0.0
+  owner: crm-team@company.com
+  domain: sales
+  description: >
+    Salesforce Contact object — individuals associated with accounts.
+    Heavy PII content — ensure GDPR/CCPA compliance downstream.
+  tags: [salesforce, crm, contacts, pii]
+
+schema:
+  type: table
+  fields:
+    - name: id
+      type: string
+      required: true
+      unique: true
+
+    - name: account_id
+      type: string
+      required: false
+      description: FK to Account. Null for private contacts.
+
+    - name: first_name
+      type: string
+      required: false
+      pii: true
+
+    - name: last_name
+      type: string
+      required: true
+      pii: true
+
+    - name: email
+      type: string
+      required: false
+      pii: true
+
+    - name: phone
+      type: string
+      required: false
+      pii: true
+
+    - name: mailing_country
+      type: string
+      required: false
+
+    - name: title
+      type: string
+      required: false
+      description: Job title
+
+    - name: department
+      type: string
+      required: false
+
+    - name: lead_source
+      type: string
+      required: false
+      description: "Origin: Web, Referral, Campaign, etc."
+
+    - name: owner_id
+      type: string
+      required: true
+
+    - name: created_date
+      type: timestamp
+      required: true
+
+    - name: last_modified_date
+      type: timestamp
+      required: true
+
+    - name: is_deleted
+      type: boolean
+      required: true
+
+    - name: has_opted_out_of_email
+      type: boolean
+      required: false
+      description: Email opt-out flag — critical for GDPR compliance
+
+quality:
+  rules:
+    - name: id_format_18_char
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE LENGTH(id) != 18"
+      threshold: 0
+      severity: CRITICAL
+
+    - name: last_name_required
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE last_name IS NULL OR TRIM(last_name) = ''"
+      threshold: 0
+      severity: CRITICAL
+      description: Salesforce enforces last_name as required
+
+    - name: email_format_valid
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE email IS NOT NULL AND email NOT LIKE '%_@_%.__%'"
+      threshold: 0
+      severity: WARNING
+      description: Emails should match basic format when present
+
+    - name: account_id_format
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE account_id IS NOT NULL AND LENGTH(account_id) != 18"
+      threshold: 0
+      severity: CRITICAL
+      description: Account ID must be 18 chars when present
+
+    - name: no_future_created_dates
+      type: sql
+      query: "SELECT COUNT(*) FROM {table} WHERE created_date > CURRENT_TIMESTAMP"
+      threshold: 0
+      severity: WARNING
+
+sla:
+  freshness: 24h
+  completeness: 99%
