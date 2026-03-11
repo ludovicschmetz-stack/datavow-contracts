@@ -1,12 +1,14 @@
+# Copy this file and adjust for your local setup
+# The Docker demo uses: host=localhost, port=5433, user=datavow, dbname=datavow_demo
 datavow_demo:
   target: dev
   outputs:
     dev:
       type: postgres
-      host: localhost
-      port: 5433
-      user: datavow
-      password: datavow123
+      host: "{{ env_var('DATAVOW_DB_HOST', 'localhost') }}"
+      port: "{{ env_var('DATAVOW_DB_PORT', '5433') | int }}"
+      user: "{{ env_var('DATAVOW_DB_USER', 'datavow') }}"
+      password: "{{ env_var('DATAVOW_DB_PASSWORD', 'datavow123') }}"
       dbname: datavow_demo
       schema: public
       threads: 4
