@@ -1,7 +1,7 @@
 apiVersion: datavow/v1
 kind: DataContract
 metadata:
-  name: salesforce-opportunities
+  name: salesforce_opportunity
   version: 1.0.0
   owner: crm-team@company.com
   domain: sales

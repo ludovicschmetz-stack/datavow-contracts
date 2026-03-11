@@ -1,7 +1,7 @@
 apiVersion: datavow/v1
 kind: DataContract
 metadata:
-  name: sap-materials
+  name: sap_mara
   version: 1.0.0
   owner: erp-team@company.com
   domain: master-data

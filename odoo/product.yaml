@@ -1,7 +1,7 @@
 apiVersion: datavow/v1
 kind: DataContract
 metadata:
-  name: odoo-products
+  name: odoo_product_product
   version: 1.0.0
   owner: erp-team@company.com
   domain: master-data

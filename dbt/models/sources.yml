@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: salesforce
+    database: datavow_demo
+    schema: salesforce
+    tables:
+      - name: account
+      - name: contact
+      - name: opportunity
+      - name: lead
+
+  - name: sap
+    database: datavow_demo
+    schema: sap
+    tables:
+      - name: kna1
+      - name: vbak
+      - name: mara
+
+  - name: odoo
+    database: datavow_demo
+    schema: odoo
+    tables:
+      - name: res_partner
+      - name: sale_order
+      - name: product_product

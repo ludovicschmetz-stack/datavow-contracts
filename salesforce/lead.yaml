@@ -1,7 +1,7 @@
 apiVersion: datavow/v1
 kind: DataContract
 metadata:
-  name: salesforce-leads
+  name: salesforce_lead
   version: 1.0.0
   owner: crm-team@company.com
   domain: marketing

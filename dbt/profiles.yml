@@ -1,0 +1,12 @@
+datavow_demo:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5433
+      user: datavow
+      password: datavow123
+      dbname: datavow_demo
+      schema: public
+      threads: 4

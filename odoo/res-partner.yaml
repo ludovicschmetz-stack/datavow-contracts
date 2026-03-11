@@ -1,7 +1,7 @@
 apiVersion: datavow/v1
 kind: DataContract
 metadata:
-  name: odoo-partners
+  name: odoo_res_partner
   version: 1.0.0
   owner: erp-team@company.com
   domain: master-data
@@ -127,7 +127,7 @@ quality:
 
     - name: no_orphan_contacts
       type: sql
-      query: "SELECT COUNT(*) FROM {table} t WHERE t.parent_id IS NOT NULL AND t.parent_id NOT IN (SELECT id FROM {table})"
+      query: "SELECT COUNT(*) FROM {table} WHERE parent_id IS NOT NULL AND parent_id NOT IN (SELECT id FROM {table})"
       threshold: 0
       severity: CRITICAL
       description: Contacts must reference an existing parent company

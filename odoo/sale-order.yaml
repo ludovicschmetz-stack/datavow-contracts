@@ -1,7 +1,7 @@
 apiVersion: datavow/v1
 kind: DataContract
 metadata:
-  name: odoo-sale-orders
+  name: odoo_sale_order
   version: 1.0.0
   owner: erp-team@company.com
   domain: sales

@@ -1,7 +1,7 @@
 apiVersion: datavow/v1
 kind: DataContract
 metadata:
-  name: salesforce-contacts
+  name: salesforce_contact
   version: 1.0.0
   owner: crm-team@company.com
   domain: sales
