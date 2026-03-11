@@ -1,0 +1,10 @@
+id,product_tmpl_id,name,default_code,barcode,type,categ_id,list_price,standard_price,uom_id,weight,sale_ok,purchase_ok,active,create_date,write_date
+1,1,Office Desk Standard,DESK-001,5901234567890,product,1,299.00,180.00,1,25.000,t,t,t,2023-01-10 10:00:00,2025-01-15 12:00:00
+2,2,Ergonomic Chair Pro,CHAIR-001,5901234567891,product,1,449.00,250.00,1,15.000,t,t,t,2023-03-20 09:00:00,2025-02-20 11:00:00
+3,3,IT Support - Hourly,SVC-001,,service,2,120.00,80.00,2,,t,f,t,2023-06-15 14:00:00,2025-03-01 10:00:00
+4,4,Printer Paper A4 (500),PAPER-001,5901234567892,consu,3,5.99,3.50,1,2.500,t,t,t,2024-01-08 08:00:00,2025-02-15 09:00:00
+5,5,Mystery Widget,WID-001,5901234567893,magical,1,49.99,30.00,1,0.500,t,t,t,2024-05-20 11:00:00,2025-03-05 14:00:00
+6,6,Free Giveaway Pen,PEN-001,5901234567894,consu,3,0.00,0.50,1,0.020,t,t,t,2024-08-10 10:00:00,2025-03-08 09:00:00
+7,7,Mispriced Cable,CABLE-001,5901234567895,product,1,9.99,25.00,1,0.150,t,t,t,2024-11-01 13:00:00,2025-03-07 16:00:00
+8,8,Duplicate Barcode Item,DUP-001,5901234567890,product,1,19.99,12.00,1,1.000,t,t,t,2025-01-15 09:00:00,2025-03-09 11:00:00
+9,9,Negative Weight Thing,NEG-001,5901234567896,product,1,29.99,15.00,1,-0.500,t,t,t,2025-02-20 10:00:00,2025-03-10 08:00:00

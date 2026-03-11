@@ -1,4 +1,8 @@
+.DS_Store
+*.pyc
+__pycache__/
+.venv/
 dbt/target/
 dbt/logs/
 dbt/dbt_packages/
-reports/*.html
+dbt/.user.yml

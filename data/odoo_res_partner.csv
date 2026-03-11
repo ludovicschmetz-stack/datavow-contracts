@@ -1,0 +1,9 @@
+id,name,is_company,parent_id,email,phone,mobile,street,city,zip,country_id,vat,customer_rank,supplier_rank,active,create_date,write_date
+10,Post Luxembourg,t,,info@post.lu,+35224761,,25 Rue Emile Bian,Luxembourg,1235,126,LU11111111,1,0,t,2023-01-15 10:00:00,2025-03-01 14:00:00
+11,Jean Schmit,f,10,jean@post.lu,+35224761001,,,Luxembourg,1235,126,,1,0,t,2023-06-20 08:00:00,2025-02-28 09:00:00
+12,Cactus SA,t,,contact@cactus.lu,+35226311,,Route de Longwy,Bereldange,7260,126,LU22222222,1,1,t,2023-09-10 11:00:00,2025-03-05 16:00:00
+13,Luxair Group,t,,info@luxair.lu,+35224981,,Aeroport de Luxembourg,Findel,1110,126,LU33333333,1,0,t,2022-04-18 09:00:00,2025-01-20 15:00:00
+14,"",t,,contact@noname.com,+352261111,,5 Av Monterey,Luxembourg,2163,126,LU87654321,1,0,t,2024-03-10 11:00:00,2025-03-05 16:00:00
+15,Orphan Contact,f,9999,orphan@nowhere.com,+352621111,,,Esch,4001,126,,1,0,t,2024-07-01 09:00:00,2025-01-15 10:00:00
+16,Bad Email SARL,t,,bad-email-format,+352261222,,8 Bd Royal,Luxembourg,2449,126,,1,0,t,2024-09-15 13:00:00,2025-03-08 11:00:00
+17,No VAT Customer SARL,t,,novat@customer.lu,+352261333,,12 Rue du Fort,Luxembourg,1616,126,,1,0,t,2025-01-10 08:00:00,2025-03-02 12:00:00

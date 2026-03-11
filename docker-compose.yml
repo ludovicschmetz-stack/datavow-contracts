@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: datavow-demo-db
+    environment:
+      POSTGRES_DB: datavow_demo
+      POSTGRES_USER: datavow
+      POSTGRES_PASSWORD: datavow123
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U datavow -d datavow_demo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

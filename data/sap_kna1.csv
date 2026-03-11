@@ -1,0 +1,10 @@
+kunnr,name1,name2,land1,ort01,pstlz,stras,telf1,smtp_addr,ktokd,stcd1,erdat,ernam,loevm,sperr
+0000001000,Siemens AG,Energy Division,DE,Munich,80333,Werner-von-Siemens-Str 1,+498989001,info@siemens.de,KUNA,DE123456789,2020-03-15,ADMIN01,,
+0000002000,BASF SE,,DE,Ludwigshafen,67056,Carl-Bosch-Str 38,+496216001,contact@basf.com,KUNA,DE987654321,2019-07-22,ADMIN01,,
+0000003000,Ferrero Luxembourg,,LU,Arlon,L-8399,Zone Industrielle,+35226480001,ferrero@ferrero.lu,KUNA,LU11111111,2021-04-10,ADMIN02,,
+0000004000,Paul Wurth SA,,LU,Luxembourg,1122,Rue de Neudorf,+35226601,info@paulwurth.com,KUNA,LU22222222,2020-08-20,ADMIN01,,
+0000005000,"",Missing Name,FR,Paris,75001,,+33140000001,,KUNA,,2021-01-10,ADMIN02,,
+0000006000,Invalid Country Corp,,XYZ,Berlin,10115,Friedrichstr 100,+493012345,bad@country.de,KUNA,,2023-02-28,ADMIN03,,
+0000007000,No Account Group Ltd,,DE,Hamburg,20095,Jungfernstieg 1,+494032100,,"",,2021-11-05,ADMIN01,,
+0000008000,Future Customer GmbH,,AT,Vienna,1010,Stephansplatz 1,+4311234567,future@customer.at,KUNA,AT123456789,2028-01-01,ADMIN01,,
+0000009000,Deleted But Active,,CH,Zurich,8001,Bahnhofstr 1,+41441234567,deleted@active.ch,KUNA,CH123456789,2020-09-15,ADMIN02,X,

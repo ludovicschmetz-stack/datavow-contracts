@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DataVow Report — odoo_sale_order</title>
+<style>
+  :root {
+    --c-bg: #fafafa;
+    --c-surface: #ffffff;
+    --c-text: #1a1a2e;
+    --c-muted: #6b7280;
+    --c-border: #e5e7eb;
+    --c-brand: #1e3a5f;
+    --c-brand-light: #2d5a8e;
+    --c-kept: #059669;
+    --c-kept-bg: #d1fae5;
+    --c-strained: #d97706;
+    --c-strained-bg: #fef3c7;
+    --c-broken: #dc2626;
+    --c-broken-bg: #fee2e2;
+    --c-shattered: #991b1b;
+    --c-shattered-bg: #fecaca;
+    --c-critical: #dc2626;
+    --c-warning: #d97706;
+    --c-info: #6b7280;
+    --c-pass: #059669;
+    --font-body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--c-bg);
+    color: var(--c-text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+  header {
+    background: linear-gradient(135deg, var(--c-brand) 0%, var(--c-brand-light) 100%);
+    color: white;
+    padding: 32px 0;
+  }
+  header .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+  .brand { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.8; }
+  .brand strong { font-size: 22px; letter-spacing: 0; text-transform: none; opacity: 1; display: block; margin-top: 2px; }
+  .verdict-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 18px; font-weight: 700;
+  }
+  .verdict-badge .emoji { font-size: 24px; }
+  .verdict-kept { background: var(--c-kept-bg); color: var(--c-kept); }
+  .verdict-strained { background: var(--c-strained-bg); color: var(--c-strained); }
+  .verdict-broken { background: var(--c-broken-bg); color: var(--c-broken); }
+  .verdict-shattered { background: var(--c-shattered-bg); color: var(--c-shattered); }
+
+  section { margin-top: 28px; }
+  .card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  h2 {
+    font-size: 16px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--c-brand);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--c-brand);
+  }
+
+  .score-grid {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+  .score-circle {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    border: 6px solid var(--c-border);
+  }
+  .score-circle.kept { border-color: var(--c-kept); }
+  .score-circle.strained { border-color: var(--c-strained); }
+  .score-circle.broken { border-color: var(--c-broken); }
+  .score-circle.shattered { border-color: var(--c-shattered); }
+  .score-number { font-size: 42px; font-weight: 800; line-height: 1; }
+  .score-label { font-size: 12px; color: var(--c-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .score-number.kept { color: var(--c-kept); }
+  .score-number.strained { color: var(--c-strained); }
+  .score-number.broken { color: var(--c-broken); }
+  .score-number.shattered { color: var(--c-shattered); }
+
+  .counters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .counter {
+    text-align: center; padding: 14px 8px;
+    border-radius: 8px; background: var(--c-bg);
+  }
+  .counter-value { font-size: 28px; font-weight: 800; line-height: 1; }
+  .counter-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--c-muted); margin-top: 4px; }
+  .counter-value.pass { color: var(--c-pass); }
+  .counter-value.critical { color: var(--c-critical); }
+  .counter-value.warning { color: var(--c-warning); }
+  .counter-value.info { color: var(--c-info); }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .meta-item label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--c-muted); margin-bottom: 2px; }
+  .meta-item span { font-weight: 600; }
+  .tag {
+    display: inline-block; padding: 2px 8px;
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: 4px; font-size: 12px; margin-right: 4px;
+    font-family: var(--font-mono);
+  }
+  .tag-pii { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    text-align: left; padding: 10px 12px;
+    background: var(--c-bg); font-weight: 700;
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--c-muted);
+    border-bottom: 2px solid var(--c-border);
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--c-border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  .type-badge {
+    display: inline-block; padding: 2px 8px;
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 4px; font-family: var(--font-mono);
+    font-size: 12px; color: #1e40af;
+  }
+  .flag { font-size: 13px; }
+  .flag-yes { color: var(--c-pass); }
+  .flag-no { color: var(--c-border); }
+
+  .finding-group { margin-bottom: 20px; }
+  .finding-group-title {
+    font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--c-muted); margin-bottom: 8px;
+    padding-left: 4px;
+  }
+  .finding {
+    display: grid;
+    grid-template-columns: 28px 80px 1fr;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    align-items: start;
+    font-size: 14px;
+  }
+  .finding:nth-child(even) { background: var(--c-bg); }
+  .finding-icon { font-size: 16px; text-align: center; padding-top: 1px; }
+  .finding-pass .finding-icon { color: var(--c-pass); }
+  .finding-fail .finding-icon { color: var(--c-critical); }
+  .sev {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 4px; font-size: 11px;
+    font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; text-align: center;
+  }
+  .sev-critical { background: #fee2e2; color: var(--c-critical); }
+  .sev-warning { background: #fef3c7; color: var(--c-warning); }
+  .sev-info { background: #f3f4f6; color: var(--c-info); }
+  .finding-details { font-size: 12px; color: var(--c-muted); font-family: var(--font-mono); margin-top: 2px; }
+
+  footer {
+    margin-top: 32px; padding: 20px 0;
+    border-top: 1px solid var(--c-border);
+    text-align: center;
+    font-size: 12px; color: var(--c-muted);
+  }
+  footer strong { color: var(--c-brand); }
+
+  @media print {
+    body { font-size: 12px; }
+    header { padding: 16px 0; }
+    .card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+    .container { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="brand">
+      DATAVOW
+      <strong>odoo_sale_order</strong>
+    </div>
+    <div class="verdict-badge verdict-shattered">
+      <span class="emoji">❌</span>
+      Vow Shattered
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <section>
+    <div class="card">
+      <h2>Vow Score</h2>
+      <div class="score-grid">
+        <div class="score-circle shattered">
+          <div class="score-number shattered">0</div>
+          <div class="score-label">out of 100</div>
+        </div>
+        <div class="counters">
+          <div class="counter">
+            <div class="counter-value pass">42</div>
+            <div class="counter-label">Passed</div>
+          </div>
+          <div class="counter">
+            <div class="counter-value critical">11</div>
+            <div class="counter-label">Critical</div>
+          </div>
+          <div class="counter">
+            <div class="counter-value warning">1</div>
+            <div class="counter-label">Warning</div>
+          </div>
+          <div class="counter">
+            <div class="counter-value info">0</div>
+            <div class="counter-label">Info</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>Contract</h2>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <label>Name</label>
+          <span>odoo_sale_order</span>
+        </div>
+        <div class="meta-item">
+          <label>Version</label>
+          <span>1.0.0</span>
+        </div>
+        <div class="meta-item">
+          <label>Owner</label>
+          <span>erp-team@company.com</span>
+        </div>
+        <div class="meta-item">
+          <label>Domain</label>
+          <span>sales</span>
+        </div>
+      </div>
+      <p style="margin-top: 12px; color: var(--c-muted);">Odoo sale.order — sales order header. One row per quotation/order. Join with sale.order.line for line items. States flow: draft → sent → sale → done (or cancel).
+</p>
+      <div style="margin-top: 10px;">
+        <span class="tag">odoo</span>
+        <span class="tag">erp</span>
+        <span class="tag">sales</span>
+        <span class="tag">orders</span>
+        <span class="tag">transactions</span>
+      </div>
+      <div style="margin-top: 12px;">
+        <div class="meta-item">
+          <label>Source</label>
+          <span style="font-family: var(--font-mono); font-size: 13px;">data/odoo_sale_order.csv</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>Schema — 16 fields</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Unique</th>
+            <th>PII</th>
+            <th>Constraints</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>id</strong></td>
+            <td><span class="type-badge">integer</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-yes">✓</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>name</strong></td>
+            <td><span class="type-badge">string</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>partner_id</strong></td>
+            <td><span class="type-badge">integer</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>state</strong></td>
+            <td><span class="type-badge">string</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>date_order</strong></td>
+            <td><span class="type-badge">timestamp</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>amount_untaxed</strong></td>
+            <td><span class="type-badge">float</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>amount_tax</strong></td>
+            <td><span class="type-badge">float</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>amount_total</strong></td>
+            <td><span class="type-badge">float</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>currency_id</strong></td>
+            <td><span class="type-badge">integer</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>pricelist_id</strong></td>
+            <td><span class="type-badge">integer</span></td>
+            <td class="flag flag-no">—</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>user_id</strong></td>
+            <td><span class="type-badge">integer</span></td>
+            <td class="flag flag-no">—</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>team_id</strong></td>
+            <td><span class="type-badge">integer</span></td>
+            <td class="flag flag-no">—</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>invoice_status</strong></td>
+            <td><span class="type-badge">string</span></td>
+            <td class="flag flag-no">—</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>commitment_date</strong></td>
+            <td><span class="type-badge">timestamp</span></td>
+            <td class="flag flag-no">—</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>create_date</strong></td>
+            <td><span class="type-badge">timestamp</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+          <tr>
+            <td><strong>write_date</strong></td>
+            <td><span class="type-badge">timestamp</span></td>
+            <td class="flag flag-yes">✓</td>
+            <td class="flag flag-no">—</td>
+            <td><span class="flag flag-no">—</span></td>
+            <td style="font-size: 12px; color: var(--c-muted);">
+              —
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>Findings — 54 checks</h2>
+
+      <div class="finding-group">
+        <div class="finding-group-title">Failures (12)</div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:partner_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'partner_id' has 1 null(s) but is required
+<div class="finding-details">null_count=1</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:date_order</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'date_order' has 1 null(s) but is required
+<div class="finding-details">null_count=1</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:commitment_date</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'commitment_date' type mismatch: expected timestamp, got VARCHAR
+          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>partner_required</strong> <span style="color: var(--c-muted);">[quality]</span><br>
+            SQL check 'partner_required' failed: 1 violations (threshold=0)
+<div class="finding-details">query_result=1, threshold=0</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>valid_state</strong> <span style="color: var(--c-muted);">[quality]</span><br>
+            SQL check 'valid_state' failed: 1 violations (threshold=0)
+<div class="finding-details">query_result=1, threshold=0</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>amount_total_consistency</strong> <span style="color: var(--c-muted);">[quality]</span><br>
+            SQL check 'amount_total_consistency' failed: 1 violations (threshold=0)
+<div class="finding-details">query_result=1, threshold=0</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>confirmed_orders_have_date</strong> <span style="color: var(--c-muted);">[quality]</span><br>
+            SQL check 'confirmed_orders_have_date' failed: 1 violations (threshold=0)
+<div class="finding-details">query_result=1, threshold=0</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-warning">WARNING</span></div>
+          <div>
+            <strong>cancelled_not_invoiced</strong> <span style="color: var(--c-muted);">[quality]</span><br>
+            SQL check 'cancelled_not_invoiced' failed: 1 violations (threshold=0)
+<div class="finding-details">query_result=1, threshold=0</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>freshness:date_order</strong> <span style="color: var(--c-muted);">[freshness]</span><br>
+            Field 'date_order' is stale (age: 365d 3h, max allowed: 24h)
+<div class="finding-details">latest=2025-03-10T09:00:00+00:00, threshold=2026-03-09T12:22:31.440245+00:00</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>freshness:commitment_date</strong> <span style="color: var(--c-muted);">[freshness]</span><br>
+            Field 'commitment_date' has no non-null values — cannot assess freshness
+          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>freshness:create_date</strong> <span style="color: var(--c-muted);">[freshness]</span><br>
+            Field 'create_date' is stale (age: 365d 3h, max allowed: 24h)
+<div class="finding-details">latest=2025-03-10T09:00:00+00:00, threshold=2026-03-09T12:22:31.440245+00:00</div>          </div>
+        </div>
+        <div class="finding finding-fail">
+          <div class="finding-icon">✗</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>freshness:write_date</strong> <span style="color: var(--c-muted);">[freshness]</span><br>
+            Field 'write_date' is stale (age: 365d 3h, max allowed: 24h)
+<div class="finding-details">latest=2025-03-10T09:00:00+00:00, threshold=2026-03-09T12:22:31.440245+00:00</div>          </div>
+        </div>
+      </div>
+
+      <div class="finding-group">
+        <div class="finding-group-title">Passed (42)</div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'id' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'id' type OK (BIGINT)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'id' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>unique:id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'id' values are unique
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:name</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'name' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:name</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'name' type OK (VARCHAR)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:name</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'name' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:partner_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'partner_id' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:partner_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'partner_id' type OK (BIGINT)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:state</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'state' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:state</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'state' type OK (VARCHAR)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:state</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'state' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:date_order</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'date_order' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:date_order</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'date_order' type OK (TIMESTAMP)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:amount_untaxed</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_untaxed' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:amount_untaxed</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_untaxed' type OK (DOUBLE)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:amount_untaxed</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_untaxed' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:amount_tax</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_tax' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:amount_tax</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_tax' type OK (DOUBLE)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:amount_tax</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_tax' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:amount_total</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_total' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:amount_total</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_total' type OK (DOUBLE)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:amount_total</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'amount_total' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:currency_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'currency_id' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:currency_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'currency_id' type OK (BIGINT)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:currency_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'currency_id' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:pricelist_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'pricelist_id' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:pricelist_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'pricelist_id' type OK (BIGINT)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:user_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'user_id' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:user_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'user_id' type OK (BIGINT)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:team_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'team_id' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:team_id</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'team_id' type OK (BIGINT)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:invoice_status</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'invoice_status' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:invoice_status</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'invoice_status' type OK (VARCHAR)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:commitment_date</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'commitment_date' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:create_date</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'create_date' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:create_date</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'create_date' type OK (TIMESTAMP)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:create_date</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'create_date' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_exists:write_date</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'write_date' exists
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>field_type:write_date</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'write_date' type OK (TIMESTAMP)
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-critical">CRITICAL</span></div>
+          <div>
+            <strong>required:write_date</strong> <span style="color: var(--c-muted);">[schema]</span><br>
+            Field 'write_date' has no nulls
+          </div>
+        </div>
+        <div class="finding finding-pass">
+          <div class="finding-icon">✓</div>
+          <div><span class="sev sev-warning">WARNING</span></div>
+          <div>
+            <strong>no_negative_totals</strong> <span style="color: var(--c-muted);">[quality]</span><br>
+            SQL check 'no_negative_totals' passed (result=0, threshold=0)
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="container">
+    Generated by <strong>DataVow v0.2.1</strong> on 2026-03-10 12:22 UTC<br>
+    <em>A solemn vow on your data. From YAML to verdict.</em>
+  </div>
+</footer>
+
+</body>
+</html>
